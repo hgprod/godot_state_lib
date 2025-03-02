@@ -1,0 +1,17 @@
+[configuration]
+
+entry_symbol = "util_lib_init"
+compatibility_minimum = "4.3"
+
+[libraries]
+
+macos.debug = "res://bin/libgodotutil.macos.template_debug.framework"
+macos.release = "res://bin/libgodotutil.macos.template_release.framework"
+macos.editor = "res://bin/libgodotutil.macos.editor.framework"
+
+windows.debug = "res://bin/libgodotutil.windows.template_debug.x86_64.dll"
+windows.release = "res://bin/libgodotutil.windows.template_release.x86_64.dll"
+windows.editor = "res://bin/libgodotutil.windows.editor.x86_64.dll"
+
+ios.debug = "res://bin/libgodotutil.ios.template_debug.a"
+ios.release = "res://bin/libgodotutil.ios.template_release.a"

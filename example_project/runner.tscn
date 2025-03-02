@@ -1,0 +1,148 @@
+[gd_scene load_steps=8 format=3 uid="uid://dbvwrnrf6ed5l"]
+
+[ext_resource type="Texture2D" uid="uid://0tqxpi7vxklc" path="res://icon.svg" id="1_pi8hu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cflej"]
+size = Vector2(128, 128)
+
+[sub_resource type="GDScript" id="GDScript_psetc"]
+script/source = "extends State #Loading
+
+func _goto_state() -> String:
+	if owner.is_node_ready(): return \"ChooseDirection\"
+	return \"\"
+"
+
+[sub_resource type="GDScript" id="GDScript_j35rt"]
+script/source = "extends State #Running
+
+var _hit: bool
+
+func _begin_state() -> void:
+	print(\"Running started\")
+	_hit = false
+
+func _goto_state() -> String:
+	if _hit: return \"Stunned\"
+	return \"\"
+
+func _on_input(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+	if not is_active: return
+	if event is InputEventMouseButton:
+		var evt := event as InputEventMouseButton
+		if evt.button_index == MOUSE_BUTTON_LEFT and evt.is_pressed():
+			_hit = true
+"
+
+[sub_resource type="GDScript" id="GDScript_kdmul"]
+script/source = "extends State #ChooseDirection
+
+@export var _choose_time: float
+@export var _sprite: Sprite2D
+
+var _owner: Node2D
+
+func _begin_state() -> void:
+	print(\"Choose Started\")
+	_owner = owner as Node2D
+	_sprite.modulate = Color.BLUE_VIOLET
+
+#1440 x 810
+func _end_state() -> void:
+	_sprite.modulate = Color.WHITE
+	get_context()[\"target\"] = Vector2(randf_range(64, 1440 - 64), randf_range(64, 810 - 64))
+
+func _goto_state() -> String:
+	if _choose_time <= 0: return \"Moving\"
+	return \"\"
+
+func _process(delta: float) -> void:
+	if not is_active: return
+	_choose_time -= delta
+"
+
+[sub_resource type="GDScript" id="GDScript_3dxir"]
+script/source = "extends State #Moving
+
+@export var _speed: float
+
+var _target: Vector2
+var _move_dist: float
+var _owner: Node2D
+
+func _begin_state() -> void:
+	print(\"Move Started\")
+	_target = get_context()[\"target\"]
+	_move_dist = 10
+	_owner = owner as Node2D
+
+func _goto_state() -> String:
+	if is_zero_approx(_move_dist): return \"ChooseDirection\"
+	return \"\"
+
+func _physics_process(delta: float) -> void:
+	if not is_active: return
+	var move := _owner.position.move_toward(_target, delta * _speed)
+	_move_dist = (move - _owner.position).length()
+	_owner.position = move
+"
+
+[sub_resource type="GDScript" id="GDScript_0n2tb"]
+script/source = "extends State #Stunned
+
+@export var _stun_time: float
+@export var _sprite: Sprite2D
+
+var _timer: float
+
+func _begin_state() -> void:
+	_timer = 0
+	_sprite.modulate = Color.DARK_RED
+
+func _end_state() -> void:
+	_sprite.modulate = Color.WHITE
+
+func _goto_state() -> String:
+	if _timer >= _stun_time: return \"ChooseDirection\"
+	return \"\"
+
+func _process(delta: float) -> void:
+	if not is_active: return
+	_timer += delta
+"
+
+[node name="Runner" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_pi8hu")
+
+[node name="Area2D" type="Area2D" parent="Sprite2D"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sprite2D/Area2D"]
+shape = SubResource("RectangleShape2D_cflej")
+
+[node name="StateMachine" type="StateMachine" parent="."]
+default = "Loading"
+
+[node name="Loading" type="State" parent="StateMachine"]
+is_active = true
+script = SubResource("GDScript_psetc")
+
+[node name="Running" type="State" parent="StateMachine"]
+script = SubResource("GDScript_j35rt")
+
+[node name="ChooseDirection" type="State" parent="StateMachine/Running" node_paths=PackedStringArray("_sprite")]
+script = SubResource("GDScript_kdmul")
+_choose_time = 0.4
+_sprite = NodePath("../../../Sprite2D")
+
+[node name="Moving" type="State" parent="StateMachine/Running"]
+script = SubResource("GDScript_3dxir")
+_speed = 250.0
+
+[node name="Stunned" type="State" parent="StateMachine" node_paths=PackedStringArray("_sprite")]
+script = SubResource("GDScript_0n2tb")
+_stun_time = 2.0
+_sprite = NodePath("../../Sprite2D")
+
+[connection signal="input_event" from="Sprite2D/Area2D" to="StateMachine/Running" method="_on_input"]
