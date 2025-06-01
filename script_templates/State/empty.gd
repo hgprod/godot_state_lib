@@ -19,7 +19,7 @@ func _goto_state() -> String:
 	return ""
 
 # for all built in functions (_process, _input, etc.), use 
-#	if not is_active(): return
+#	if not is_active: return
 # to ensure that this is the active state before starting a process.
 
 # get_context() will return a dictionary that can be used to pass data between states.
