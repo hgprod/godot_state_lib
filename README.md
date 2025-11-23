@@ -1,3 +1,7 @@
+# Depreciated
+
+Switch to the state_behavior_system
+
 Godot State Library
 
 Include the bin folder into any project.
